@@ -12,7 +12,7 @@ try: os.mkdir('Dumps')
 except Exception as e:pass
 
 id = []
-ok = 0
+ok, loop = 0, 0
 
 quality = {'1080p': '137', '720p' : '136'}
 
@@ -52,7 +52,7 @@ def menu():
         elif opsi == 5: dumpsIDYT()
         else: exit('Input Tidak Valid')
     except ValueError: exit('Input Harus Angka')
-    except KeyboardInterrupt: exit()
+    except KeyboardInterrupt: exit('')
 
 def generate_foto():
     key = input("Kata Kunci  : ").lower()
@@ -342,34 +342,61 @@ def dumpsIDTT():
     except requests.JSONDecodeError: exit('Terjadi Kesalahan Pastikan Link Benar')
     except Exception: exit('Terjadi Kesalahan Pastikan Semua Sesuai')
 
+def checkuser(r, params:dict):
+    global loop
+    headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:130.0) Gecko/20100101 Firefox/130.0','Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/png,image/svg+xml,*/*;q=0.8','Accept-Language': 'id,en-US;q=0.7,en;q=0.3','Accept-Encoding': 'gzip, deflate','Upgrade-Insecure-Requests': '1','Sec-Fetch-Dest': 'document','Sec-Fetch-Mode': 'navigate','Sec-Fetch-Site': 'none','Sec-Fetch-User': '?1','Connection': 'keep-alive',}
+    response = r.get('https://www.youtube.com/results', params=params, headers=headers).text
+    channel  = set(re.findall(r'"webCommandMetadata":{"url":"/@(.*?)"', str(response)))
+    query    = '"searchEndpoint":{"query":"%s","params":"(.*?)"'%params['search_query']
+    paramx   = re.search(query, str(response)).group(1)
+    if params['search_query'] in channel: return True
+    elif not channel: return False
+    else:
+        loop +=1
+        if loop == 2: return False
+        else:
+            dat = params.copy()
+            dat.update({'sp': paramx})
+            user = checkuser(r, dat)
+            if user: return True
+            else: return False
+
 def dumpsIDYT():
     global ok, id
     print('Gunakan Koma (,) Jika Lebih Dari 1 ')
     linkz = input('Masukan Username : @').split(',')
     r = requests.Session()
     for i in linkz:
-        response = r.get(f'https://www.youtube.com/@{i}/videos', headers=headersYT(), allow_redirects=True).text
-        video_id = set(re.findall(r'"videoId":"(.*?)"',str(response)))
-        Data_YT  = re.findall(r'"text":{"content":"(.*?)"',str(response))
-        params   = re.search(r'"continuationEndpoint":{"clickTrackingParams":"(.*?)"', str(response)).group(1)
-        token    = re.search(r'"continuationCommand":{"token":"(.*?)"'     ,str(response)).group(1)
-        print('')
-        print( 'Channel      :', Data_YT[0])
-        print( 'Username     :', Data_YT[1])
-        print( 'Subscribe    :', Data_YT[2])
-        print( 'Jumlah Video :', Data_YT[3])
-        print('')
-        for x in set(video_id):
-            if x in id: pass
-            else:
-                ok +=1
-                id.append(x)
-                print(f'\rDumps {ok} ID ',end='')
-                with open(r'Dumps/{}.txt'.format(Data_YT[0]), 'a+') as w:
-                    w.write(f'https://www.youtube.com/watch?v={x}\n')
-                w.close()
-        
-        loopDump(r,Data_YT[0],params,token)
+        params = {'search_query': f'{i}'}
+        user   = checkuser(r, params)
+        if user:
+            try:
+                response = r.get(f'https://www.youtube.com/@{i}/videos', headers=headersYT(), allow_redirects=True).text
+                video_id = set(re.findall(r'"videoId":"(.*?)"',str(response)))
+                Data_YT  = re.findall(r'"text":{"content":"(.*?)"',str(response))
+                params   = re.search(r'"continuationEndpoint":{"clickTrackingParams":"(.*?)"', str(response)).group(1)
+                token    = re.search(r'"continuationCommand":{"token":"(.*?)"'     ,str(response)).group(1)
+                print('')
+                print( 'Channel      :', Data_YT[0])
+                print( 'Username     :', Data_YT[1])
+                print( 'Subscribe    :', Data_YT[2])
+                print( 'Jumlah Video :', Data_YT[3])
+                print('')
+                for x in set(video_id):
+                    if x in id: pass
+                    else:
+                        ok +=1
+                        id.append(x)
+                        print(f'\rDumps {ok} ID ',end='')
+                        with open(r'Dumps/{}.txt'.format(Data_YT[0]), 'a+') as w:
+                            w.write(f'https://www.youtube.com/watch?v={x}\n')
+                        w.close()
+                
+                loopDump(r,Data_YT[0],params,token)
+            except AttributeError as e: exit(f'[X] Terjadi Kesalahan {e}')
+        else:
+            print('')
+            exit('[X] Username Tidak ditemukan')
 
 def loopDump(r,user,clickparams,token):
     global ok
