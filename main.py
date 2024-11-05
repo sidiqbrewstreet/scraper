@@ -1,9 +1,17 @@
-import requests, re, os, json, sys, traceback
+import requests, re, os, json, sys, traceback, subprocess
 from datetime import datetime
 from bing_image_downloader import downloader
-from urllib.request import urlopen, Request
+from urllib.request import urlopen
 from bs4 import BeautifulSoup as bs
 
+try:
+    from yt_dlp import YoutubeDL
+except (ImportError, ModuleNotFoundError): 
+    print("Modul 'yt_dlp' belum terinstal. Menginstal sekarang...")
+    subprocess.check_call(["python", "-m", "pip", "install", "yt-dlp"])
+    from yt_dlp import YoutubeDL
+
+###----- FOLDER -----###
 dictor = ['Results/video-YT','Results/video-TT']
 try:
     for x in dictor: os.mkdir(x)
@@ -11,18 +19,29 @@ except Exception as e:pass
 try: os.mkdir('Dumps')
 except Exception as e:pass
 
-id = []
+###----- LIST -----###
+id, lists = [], []
 ok, loop = 0, 0
-
-quality = {'1080p': '137', '720p' : '136'}
 
 def clear(): os.system('cls' if 'win' in sys.platform.lower() else 'clear')
 
-ua = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:122.0) Gecko/20100101 Firefox/122.0'
-headersYT = lambda i=ua : {'Host': 'www.youtube.com','User-Agent': i,'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8','Accept-Language': 'id,en-US;q=0.7,en;q=0.3','Upgrade-Insecure-Requests': '1','Sec-Fetch-Dest': 'document','Sec-Fetch-Mode': 'navigate','Sec-Fetch-Site': 'none','Sec-Fetch-User': '?1','Connection': 'close',}
+ua = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:132.0) Gecko/20100101 Firefox/132.0'
+headersYT = lambda i=ua : {
+    'User-Agent': i,
+    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+    'Accept-Language': 'id,en-US;q=0.7,en;q=0.3',
+    'Accept-Encoding': 'gzip, deflate',
+    'Referer': 'https://www.youtube.com',
+    'Upgrade-Insecure-Requests': '1',
+    'Sec-Fetch-Dest': 'document',
+    'Sec-Fetch-Mode': 'navigate',
+    'Sec-Fetch-Site': 'same-origin',
+    'Sec-Fetch-User': '?1',
+    'Connection': 'keep-alive',}
 
 ###----------[ Menu ]------------###
 def menu():
+    clear()
     try:
         print('==========================================')
         print('[1] Get Foto By BING AI')
@@ -40,7 +59,7 @@ def menu():
             print('==========================================')
             info = int(input('[+] Pilih : '));print('')
             if   info == 1:
-                url = input(r'Alamat Directory : ')
+                url = input('Alamat Directory : ')
                 print('')
                 convert(1,url)
             elif info == 2:
@@ -49,7 +68,13 @@ def menu():
                 convert(2,url)
             else: exit('Input Tidak Valid')
         elif opsi == 4: dumpsIDTT()
-        elif opsi == 5: dumpsIDYT()
+        elif opsi == 5:
+            print('[1] Video')
+            print('[2] Shorts')
+            print('==========================================')
+            info = int(input('[+] Pilih : '));print('')
+            if   info == 1: dumpsIDYT(1)
+            elif info == 2: DumpShorts(2)
         else: exit('Input Tidak Valid')
     except ValueError: exit('Input Harus Angka')
     except KeyboardInterrupt: exit('')
@@ -152,50 +177,10 @@ def download_Tt(url):
     print("Caption  : ",tag)
     print('')
 
-def GetID(r, url, headers) -> str:
-    try:
-        params = {'retry': 'undefined','platform': 'youtube',}
-        data   = {'url' : '{}'.format(url),'ajax': '1','lang': 'en'}
-        response = requests.post('https://yt1d.com/mates/en/analyze/ajax', params=params, headers=headers, data=data, allow_redirects=True).text.replace('\\','')
-        ID = re.search(r'data-id="(.*?)"', str(response)).group(1)
-        return ID
-    except AttributeError: GetID(r, url, headers)
-
-def GetURL(r, link, judul:str, pixel:str, idx:str):
-    headers = {'Host': 'yt1d.com','Sec-Ch-Ua-Platform': '"Windows"','Sec-Ch-Ua': '"Google Chrome";v="129", "Not=A?Brand";v="8", "Chromium";v="129"','Sec-Ch-Ua-Mobile': '?0','X-Requested-With': 'XMLHttpRequest','User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36','Accept': 'application/json, text/javascript, */*; q=0.01','Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8','X-Note': '1080p','Origin': 'https://yt1d.com','Sec-Fetch-Site': 'same-origin','Sec-Fetch-Mode': 'cors','Sec-Fetch-Dest': 'empty','Referer': 'https://yt1d.com/','Accept-Encoding': 'gzip, deflate','Accept-Language': 'id-ID,id;q=0.9,en-US;q=0.8,en;q=0.7','Priority': 'u=1, i'}
-    ID = str(GetID(r, link, headers))
-    data = {
-        'platform': 'youtube',
-        'url'     : '{}'.format(link),
-        'title'   : '{}'.format(judul),
-        'id'      : '{}'.format(ID),
-        'ext'     : 'mp4',
-        'note'    : '{}'.format(pixel),
-        'format'  : '{}'.format(idx),
-    }
-    try:
-        response = r.post('https://yt1d.com/mates/en/convert?id={}'.format(ID), headers=headers, data=data, allow_redirects=True).json()
-        if 'success' in str(response):
-            urlx = response['downloadUrlX']
-            return urlx
-        elif 'downloaderror' in str(response):
-            return ('downloaderror')
-        else: return False
-    except requests.exceptions.JSONDecodeError: return False
-    except Exception: return False
-        
-def Download_YT(url, dir, filename):
-    headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'}
-    req   = Request(url, headers=headers)
-    link  = urlopen(req).read()
-    files = f'{dir}/{filename}'
-    with open(f'{files}.mp4', 'wb') as r:
-        r.write(link)
-    r.close()
-
 def convert(i,url):
     ok = 0
     ex = 0
+    r  = requests.Session()
     try:
         if i == 1:
             try: pathfile = open(url, 'r').read().splitlines()
@@ -203,7 +188,6 @@ def convert(i,url):
             print(f"Jumlah Video = {len(pathfile)} Video")
             print('==========================================')
             for x in pathfile:
-                r = requests.Session()
                 try:
                     if 'www.youtube.com' in x or 'youtu.be' in x:
                         if   'watch'  in x: judul = scrape_YTvideo(x)
@@ -212,16 +196,16 @@ def convert(i,url):
                         print('[*] Start Downloading... ')
                         try:
                             pet = 'Results/video-YT'
-                            os.makedirs(pet, exist_ok=True)
-                            check = GetURL(r, x, str(judul), '1080p', quality['1080p'])
-                            if   'genyoutube.online' in str(check): Download_YT(check, pet, judul)
-                            elif 'downloaderror' in str(check):
-                                check = GetURL(r, x, str(judul), '720p', quality['720p'])
-                                Download_YT(check, pet, judul)
-                            else:
-                                print(f'[*] Gagal Mengunduh... ');print('')
-                                print('==========================================')
-                                ex +=1
+                            if not os.path.exists(pet):
+                                os.makedirs(pet, exist_ok=True)
+                            count = 1
+                            ydl_opts = {
+                                'format': 'best',
+                                'outtmpl': os.path.join(pet, '%(title)s_%(count)s.%(ext)s'),  # Nama file dengan direktori
+                            }
+                            with YoutubeDL(ydl_opts) as ydl:
+                                ydl.download([url])
+                                count += 1
                         except Exception as e:
                             print(f'[*] Gagal Mengunduh... {str(e)}');print('')
                             print('==========================================')
@@ -253,8 +237,8 @@ def convert(i,url):
                     traceback.print_exc()
                     exit(f'[x] Terjadi Kesalahan {e}')
 
-            print(f'[*] Berhasil Mengunduh =-{ok} Video')
-            print(f'[*] Gagal Mengunduh =-{ex} Video\n')
+            print(f'[*] Berhasil Mengunduh = {ok} Video')
+            print(f'[*] Gagal Mengunduh    = {ex} Video\n')
             print(f"[+] File Tersimpan Di Folder: {pet}")
             print('')
 
@@ -262,28 +246,27 @@ def convert(i,url):
             for x in url:
                 try:
                     if 'www.youtube.com' in x or 'youtu.be' in x:
-                        if   'watch'  in x: scrape_YTvideo(x)
-                        elif 'shorts' in x: scrape_YTshort(x)
+                        if   'watch'  in x: judul = scrape_YTvideo(x)
+                        elif 'shorts' in x: judul = scrape_YTshort(x)
                         print('==========================================')
                         print('[*] Start Downloading... ')
                         try:
                             pet = 'Results/video-YT'
-                            os.makedirs(pet, exist_ok=True)
-                            check = GetURL(r, x, str(judul), '1080p', quality['1080p'])
-                            if   'genyoutube.online' in str(check): Download_YT(check, pet, judul)
-                            elif 'downloaderror' in str(check):
-                                check = GetURL(r, x, str(judul), '720p', quality['720p'])
-                                Download_YT(check, pet, judul)
-                            else:
-                                print(f'[*] Gagal Mengunduh... ');print('')
-                                print('==========================================')
-                                ex +=1
-                                continue
+                            if not os.path.exists(pet):
+                                os.makedirs(pet, exist_ok=True)
+                            count = 1
+                            ydl_opts = {
+                                'format': 'best',
+                                'outtmpl': os.path.join(pet, '%(title)s_%(count)s.%(ext)s'),  # Nama file dengan direktori
+                            }
+                            with YoutubeDL(ydl_opts) as ydl:
+                                ydl.download([url])
+                                count += 1
                         except Exception as e:
                             print(f'[*] Gagal Mengunduh... {str(e)}');print('')
                             print('==========================================')
                             ex +=1
-                            continue
+                            
                         print('[*] Success Downloading... ');print('');ok +=1
                         print('==========================================')
                     elif 'www.tiktok.com' in x or 'vt.tiktok.com' in x:
@@ -308,8 +291,8 @@ def convert(i,url):
                 except FileNotFoundError: exit('File Tidak Ditemukan')
                 except KeyboardInterrupt: exit()
                 except Exception as e:exit(f'[x] Terjadi Kesalahan {e}')
-            print(f'[*] Berhasil Mengunduh =-{ok} Video')
-            print(f'[*] Gagal Mengunduh =-{ex} Video\n')
+            print(f'[*] Berhasil Mengunduh = {ok} Video')
+            print(f'[*] Gagal Mengunduh    = {ex} Video\n')
             print(f"[+] File Tersimpan Di Folder: {pet}")
             print('')
     except Exception as e:exit(f'[x] Terjadi Kesalahan {e}');print('')
@@ -361,7 +344,7 @@ def checkuser(r, params:dict):
             if user: return True
             else: return False
 
-def dumpsIDYT():
+def dumpsIDYT(types):
     global ok, id
     print('Gunakan Koma (,) Jika Lebih Dari 1 ')
     linkz = input('Masukan Username : @').split(',')
@@ -390,76 +373,124 @@ def dumpsIDYT():
                         print(f'\rDumps {ok} ID ',end='')
                         with open(r'Dumps/{}.txt'.format(Data_YT[0]), 'a+') as w:
                             w.write(f'https://www.youtube.com/watch?v={x}\n')
-                        w.close()
-                
-                loopDump(r,Data_YT[0],params,token)
+                        w.close()  
+                loopDump(r, types, Data_YT[0], params, token)
             except AttributeError as e: exit(f'[X] Terjadi Kesalahan {e}')
         else:
             print('')
             exit('[X] Username Tidak ditemukan')
 
-def loopDump(r,user,clickparams,token):
+def DumpShorts(types):
     global ok
-    try:
-        data = {
-            'context': {
-                'client': {
-                    'hl': 'id',
-                    'gl': 'ID',
-                    'remoteHost': '',
-                    'deviceMake': '',
-                    'deviceModel': '',
-                    'visitorData': '',
-                    'userAgent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:122.0) Gecko/20100101 Firefox/122.0,gzip(gfe)',
-                    'clientName': 'WEB',
-                    'clientVersion': '2.20240210.05.00',
-                    'osName': 'Windows',
-                    'osVersion': '10.0',
-                    'originalUrl': f'https://www.youtube.com/{user}/videos',
-                    'screenPixelDensity': 2,
-                    'platform': 'DESKTOP',
-                    'clientFormFactor': 'UNKNOWN_FORM_FACTOR',
-                    'configInfo': {},
-                    'screenDensityFloat': 1.5,
-                    'userInterfaceTheme': 'USER_INTERFACE_THEME_DARK',
-                    'timeZone': 'Asia/Bangkok',
-                    'browserName': 'Firefox',
-                    'browserVersion': '122.0',
-                    'acceptHeader': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
-                    'screenWidthPoints': 643,
-                    'screenHeightPoints': 581,
-                    'utcOffsetMinutes': 420,
-                    'mainAppWebInfo': {
-                        'graftUrl': f'https://www.youtube.com/{user}/videos',
-                        'pwaInstallabilityStatus': 'PWA_INSTALLABILITY_STATUS_UNKNOWN',
-                        'webDisplayMode': 'WEB_DISPLAY_MODE_BROWSER',
-                        'isWebNativeShareAvailable': False}},
-                'user': {'lockedSafetyMode': False},
-                'request': {
-                    'useSsl': True,
-                    'internalExperimentFlags': [],
-                    'consistencyTokenJars': []},
-                'clickTracking': {'clickTrackingParams': clickparams},
-                'adSignalsInfo': {'params': []}},
-            'continuation': token}
+    print('Gunakan Koma (,) Jika Lebih Dari 1 ')
+    link = input('Masukan Username : @').split(',');print('')
+    for user in link:
+        r = requests.Session()
+        params = {'search_query': f'{user}'}
+        userz   = checkuser(r, params)
+        if userz:
+            try:
+                response    = r.get('https://www.youtube.com/@{}/shorts'.format(user), headers=headersYT()).text
+                video_id    = re.findall(r'"url":"/shorts/(.*?)","webPageType":"WEB_PAGE_TYPE_SHORTS",', str(response))
+                nextpage    = re.search(r'"continuationCommand":{"token":"(.*?)","request":"CONTINUATION_REQUEST_TYPE_BROWSE"', str(response)).group(1)
+                clickparams = re.search(r'"continuationEndpoint":{"clickTrackingParams":"(.*?)","commandMetadata"', str(response)).group(1)
+                for x in set(video_id):
+                    if x in id: pass
+                    else:
+                        ok +=1
+                        id.append(x)
+                        print(f'\rDumps {ok} ID ',end='')
+                        with open(f'Dumps/{user}.txt', 'a+') as w:
+                            w.write(f'https://www.youtube.com/shorts/{x}\n')
+                        w.close()
+                loopDump(r, types, user, clickparams, nextpage)
+            except AttributeError as e: traceback.print_exc()
+        else:
+            print('')
+            exit('[X] Username Tidak ditemukan')
 
-        response = r.post('https://www.youtube.com/youtubei/v1/browse?key=AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8&prettyPrint=false', headers=headersYT(), json=data).text
-        video_id = set(re.findall(r'"videoId":"(.*?)"',str(response)))
-        params   = re.search(r'"continuationEndpoint":{"clickTrackingParams":"(.*?)"',str(response)).group(1)
-        tokenz   = re.search(r'"continuationCommand":{"token":"(.*?)"',str(response)).group(1)
-        for x in set(video_id):
-            if x in id: pass
-            else:
-                ok +=1
-                id.append(x)
-                print(f'\rDumps {ok} ID ',end='')
-                with open(f'Dumps/{user}.txt', 'a+') as w:
-                    w.write(f'https://www.youtube.com/watch?v={x}\n')
-                w.close()
-        loopDump(r,user,params,tokenz)
-    except AttributeError:
-        print(f'\rBerhasil Dump {ok} ID\n')
-        pass
+def loopDump(r, types, user:str, clickparams, token):
+    global ok
+    params = {'prettyPrint': 'false'}
+    data = {
+        'context': {
+            'client': {
+                'hl': 'id',
+                'gl': 'ID',
+                'remoteHost': '',
+                'deviceMake': '',
+                'deviceModel': '',
+                'visitorData': '',
+                'userAgent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:122.0) Gecko/20100101 Firefox/122.0,gzip(gfe)',
+                'clientName': 'WEB',
+                'clientVersion': '2.20240210.05.00',
+                'osName': 'Windows',
+                'osVersion': '10.0',
+                'originalUrl': f'https://www.youtube.com/{user}/videos',
+                'screenPixelDensity': 2,
+                'platform': 'DESKTOP',
+                'clientFormFactor': 'UNKNOWN_FORM_FACTOR',
+                'configInfo': {},
+                'screenDensityFloat': 1.5,
+                'userInterfaceTheme': 'USER_INTERFACE_THEME_DARK',
+                'timeZone': 'Asia/Bangkok',
+                'browserName': 'Firefox',
+                'browserVersion': '122.0',
+                'acceptHeader': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+                'screenWidthPoints': 643,
+                'screenHeightPoints': 581,
+                'utcOffsetMinutes': 420,
+                'mainAppWebInfo': {
+                    'graftUrl': f'https://www.youtube.com/{user}/videos',
+                    'pwaInstallabilityStatus': 'PWA_INSTALLABILITY_STATUS_UNKNOWN',
+                    'webDisplayMode': 'WEB_DISPLAY_MODE_BROWSER',
+                    'isWebNativeShareAvailable': False}},
+            'user': {'lockedSafetyMode': False},
+            'request': {
+                'useSsl': True,
+                'internalExperimentFlags': [],
+                'consistencyTokenJars': []},
+            'clickTracking': {'clickTrackingParams': clickparams},
+            'adSignalsInfo': {'params': []}},
+        'continuation': token}
+    if types == 1:
+        try:
+            response = r.post('https://www.youtube.com/youtubei/v1/browse', params=params, headers=headersYT(), json=data).text
+            video_id = set(re.findall(r'"videoId":"(.*?)"',str(response)))
+            params   = re.search(r'"continuationEndpoint":{"clickTrackingParams":"(.*?)"',str(response)).group(1)
+            tokenz   = re.search(r'"continuationCommand":{"token":"(.*?)"',str(response)).group(1)
+            for x in set(video_id):
+                if x in id: pass
+                else:
+                    ok +=1
+                    id.append(x)
+                    print(f'\rDumps {ok} ID ',end='')
+                    with open(f'Dumps/{user}.txt', 'a+') as w:
+                        w.write(f'https://www.youtube.com/watch?v={x}\n')
+                    w.close()
+            loopDump(r, types, user, params, tokenz)
+        except AttributeError:
+            print(f'\rBerhasil Dump {ok} ID\n')
+            pass
+    elif types == 2:
+        try:
+            response    = r.post('https://www.youtube.com/youtubei/v1/browse', params=params, headers=headersYT(), json=data).text
+            video_id    = re.findall(r'"url":"/shorts/(.*?)","webPageType":"WEB_PAGE_TYPE_SHORTS",', str(response))
+            nextpage    = re.search(r'"continuationCommand":{"token":"(.*?)","request":"CONTINUATION_REQUEST_TYPE_BROWSE"', str(response)).group(1)
+            clickparams = re.search(r'"clickTrackingParams":"(.*?)","appendContinuationItemsAction":{"continuationItems"', str(response)).group(1)
+            for x in set(video_id):
+                if x in id: pass
+                else:
+                    ok +=1
+                    id.append(x)
+                    print(f'\rDumps {ok} ID ',end='')
+                    with open(f'Dumps/{user}.txt', 'a+') as w:
+                        w.write(f'https://www.youtube.com/shorts/{x}\n')
+                    w.close()
+            loopDump(r, types, user, clickparams, nextpage)
+        except AttributeError:
+            print(f'\rBerhasil Dump {ok} ID\n')
+            pass
 
 if __name__ == '__main__':
     clear()
