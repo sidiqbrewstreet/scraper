@@ -178,6 +178,7 @@ def download_Tt(url):
     print('')
 
 def convert(i,url):
+    count = 1
     ok = 0
     ex = 0
     r  = requests.Session()
@@ -198,13 +199,12 @@ def convert(i,url):
                             pet = 'Results/video-YT'
                             if not os.path.exists(pet):
                                 os.makedirs(pet, exist_ok=True)
-                            count = 1
                             ydl_opts = {
                                 'format': 'best',
-                                'outtmpl': os.path.join(pet, '%(title)s_%(count)s.%(ext)s'),  # Nama file dengan direktori
+                                'outtmpl': os.path.join(pet, '{}_{}.mp4'.format(judul, count)),  # Nama file dengan direktori
                             }
                             with YoutubeDL(ydl_opts) as ydl:
-                                ydl.download([url])
+                                ydl.download([x])
                                 count += 1
                         except Exception as e:
                             print(f'[*] Gagal Mengunduh... {str(e)}');print('')
@@ -254,13 +254,12 @@ def convert(i,url):
                             pet = 'Results/video-YT'
                             if not os.path.exists(pet):
                                 os.makedirs(pet, exist_ok=True)
-                            count = 1
                             ydl_opts = {
                                 'format': 'best',
-                                'outtmpl': os.path.join(pet, '%(title)s_%(count)s.%(ext)s'),  # Nama file dengan direktori
+                                'outtmpl': os.path.join(pet, '{}_{}.mp4'.format(judul, count)),  # Nama file dengan direktori
                             }
                             with YoutubeDL(ydl_opts) as ydl:
-                                ydl.download([url])
+                                ydl.download([x])
                                 count += 1
                         except Exception as e:
                             print(f'[*] Gagal Mengunduh... {str(e)}');print('')
