@@ -204,7 +204,6 @@ def Downloads_Path(count, judul_Video, link):
         return False
 
 def convert(i,url):
-    count = 1
     ok = 0
     ex = 0
     r  = requests.Session()
@@ -220,7 +219,7 @@ def convert(i,url):
                         if   'watch'  in x:
                             judul = scrape_YTvideo(x)
                             if judul:
-                                check = Downloads_Path(count=count, judul_Video=judul, link=x)
+                                check = Downloads_Path(count=ok, judul_Video=judul, link=x)
                                 if check:
                                     ok +=1
                                     print('[*] Success Downloading... ');print('')
@@ -230,14 +229,15 @@ def convert(i,url):
                                     print('[*] Gagal Mengunduh... ');print('')
                                     print('==========================================')
                             else:
-                                print('Tidak Ditemukan Video Untuk Link {}'.format(x))
                                 print('')
+                                print('Tidak Ditemukan Video Untuk Link {}'.format(x))
+                                print('==========================================')
                                 ex +=1
 
                         elif 'shorts' in x:
                             judul = scrape_YTshort(x)
                             if judul:
-                                check = Downloads_Path(count=count, judul_Video=judul, link=x)
+                                check = Downloads_Path(count=ok, judul_Video=judul, link=x)
                                 if check:
                                     ok +=1
                                     print('[*] Success Downloading... ');print('')
@@ -247,8 +247,9 @@ def convert(i,url):
                                     print('[*] Gagal Mengunduh... ');print('')
                                     print('==========================================')
                             else:
-                                print('Tidak Ditemukan Video Untuk Link {}'.format(x))
                                 print('')
+                                print('Tidak Ditemukan Video Untuk Link {}'.format(x))
+                                print('==========================================')
                                 ex +=1
 
                     elif 'www.tiktok.com' in x or 'vt.tiktok.com' in x:
@@ -288,7 +289,7 @@ def convert(i,url):
                         if   'watch'  in x:
                             judul = scrape_YTvideo(x)
                             if judul:
-                                check = Downloads_Path(count=count, judul_Video=judul, link=x)
+                                check = Downloads_Path(count=ok, judul_Video=judul, link=x)
                                 if check:
                                     ok +=1
                                     print('[*] Success Downloading... ');print('')
@@ -298,6 +299,7 @@ def convert(i,url):
                                     print('[*] Gagal Mengunduh... ');print('')
                                     print('==========================================')
                             else:
+                                print('')
                                 print('Tidak Ditemukan Video Untuk Link {}'.format(x))
                                 print('==========================================')
                                 ex +=1
@@ -305,7 +307,7 @@ def convert(i,url):
                         elif 'shorts' in x:
                             judul = scrape_YTshort(x)
                             if judul:
-                                check = Downloads_Path(count=count, judul_Video=judul, link=x)
+                                check = Downloads_Path(count=ok, judul_Video=judul, link=x)
                                 if check:
                                     ok +=1
                                     print('[*] Success Downloading... ');print('')
@@ -315,8 +317,9 @@ def convert(i,url):
                                     print('[*] Gagal Mengunduh... ');print('')
                                     print('==========================================')
                             else:
-                                print('Tidak Ditemukan Video Untuk Link {}'.format(x))
                                 print('')
+                                print('Tidak Ditemukan Video Untuk Link {}'.format(x))
+                                print('==========================================')
                                 ex +=1
                         
                     elif 'www.tiktok.com' in x or 'vt.tiktok.com' in x:
