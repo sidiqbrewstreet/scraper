@@ -108,74 +108,100 @@ def cekangka(x):
 
 def scrape_YTvideo(url) -> str:
     global judul
-    res     = requests.Session().get(url).text
-    judul   = re.search(r'name="twitter:title" content="(.*?)"', str(res)).group(1)
-    chl     = re.search(r'link itemprop="name" content="(.*?)"', str(res)).group(1)
-    subs    = re.search(r'"subscriberCountText":{"accessibility":{"accessibilityData":{"label":"(.*?)"', str(res)).group(1)
-    like    = re.search(r'"iconName":"LIKE","title":"(.*?)",', str(res)).group(1)
-    output  = int(re.search(r'"viewCount":"(\d+)"',  str(res)).group(1))
-    terbi   = re.search(r'"uploadDate":"(.*?)"', str(res)).group(1)
-    videoid = re.search(r'"videoId":"(.*?)"', str(res)).group(1)
-    tanggal = datetime.strptime(terbi, "%Y-%m-%dT%H:%M:%S%z").strftime("%d-%m-%Y")
-    if   output >= 1000000: views = str(round(output / 1000000, 1)) + " Jt"
-    elif output >= 1000000000: views = str(round(output / 1000000000, 1)) + " M"
-    else: views = str(output)[:3] + " rb"
-    print('')
-    print('Judul     : ',judul)
-    print('Channel   : ',chl)
-    print('Subscribe : ',subs)
-    print('Like      : ',like + ' Like')
-    print('Views     : ',views)
-    print('Upload    : ',tanggal)
-    print('')
-    return videoid
+    try:
+        res     = requests.Session().get(url).text
+        judul   = re.search(r'name="twitter:title" content="(.*?)"', str(res)).group(1)
+        chl     = re.search(r'link itemprop="name" content="(.*?)"', str(res)).group(1)
+        subs    = re.search(r'"subscriberCountText":{"accessibility":{"accessibilityData":{"label":"(.*?)"', str(res)).group(1)
+        like    = re.search(r'"iconName":"LIKE","title":"(.*?)",', str(res)).group(1)
+        output  = int(re.search(r'"viewCount":"(\d+)"',  str(res)).group(1))
+        terbi   = re.search(r'"uploadDate":"(.*?)"', str(res)).group(1)
+        videoid = re.search(r'"videoId":"(.*?)"', str(res)).group(1)
+        tanggal = datetime.strptime(terbi, "%Y-%m-%dT%H:%M:%S%z").strftime("%d-%m-%Y")
+        if   output >= 1000000: views = str(round(output / 1000000, 1)) + " Jt"
+        elif output >= 1000000000: views = str(round(output / 1000000000, 1)) + " M"
+        else: views = str(output)[:3] + " rb"
+        print('')
+        print('Judul     : ',judul)
+        print('Channel   : ',chl)
+        print('Subscribe : ',subs)
+        print('Like      : ',like + ' Like')
+        print('Views     : ',views)
+        print('Upload    : ',tanggal)
+        print('')
+        return videoid
+    except AttributeError: return False
 
 def scrape_YTshort(url) -> str:
     global judul
     res     = requests.Session().get(url).text.replace('\\','')
-    judul   = re.search(r'name="twitter:title" content="(.*?)"', str(res)).group(1)
-    chl     = re.search(r'link itemprop="name" content="(.*?)"', str(res)).group(1)
-    subs    = cvsubs(url)
-    lkcount = str(re.search(r'"likeCountWithLikeText":{"accessibility":{"accessibilityData":{"label":"(.*?)"}', str(res)).group(1).replace(".", "").split()[0])
-    output  = str(re.search(r'"viewCount":"(\d+)"',  str(res)).group(1))
-    terbit  = re.search(r'"uploadDate":"(.*?)"', str(res)).group(1)
-    tanggal = datetime.strptime(terbit, "%Y-%m-%dT%H:%M:%S%z").strftime("%d-%m-%Y")
-    like    = cekangka(lkcount)
-    views   = cekangka(output)
-    print('')
-    print('Judul     : ',judul)
-    print('Channel   : ',chl)
-    print('Subscribe : ',subs)
-    print('Like      : ',like)
-    print('Views     : ',views)
-    print('Upload    : ',tanggal)
-    print('')
-    return judul
+    try:
+        judul   = re.search(r'name="twitter:title" content="(.*?)"', str(res)).group(1)
+        chl     = re.search(r'link itemprop="name" content="(.*?)"', str(res)).group(1)
+        subs    = cvsubs(url)
+        lkcount = str(re.search(r'"likeCountWithLikeText":{"accessibility":{"accessibilityData":{"label":"(.*?)"}', str(res)).group(1).replace(".", "").split()[0])
+        output  = str(re.search(r'"viewCount":"(\d+)"',  str(res)).group(1))
+        terbit  = re.search(r'"uploadDate":"(.*?)"', str(res)).group(1)
+        tanggal = datetime.strptime(terbit, "%Y-%m-%dT%H:%M:%S%z").strftime("%d-%m-%Y")
+        like    = cekangka(lkcount)
+        views   = cekangka(output)
+        print('')
+        print('Judul     : ',judul)
+        print('Channel   : ',chl)
+        print('Subscribe : ',subs)
+        print('Like      : ',like)
+        print('Views     : ',views)
+        print('Upload    : ',tanggal)
+        print('')
+        return judul
+    except AttributeError: return False
 
 def download_Tt(url):
     global ids, chl
     headers = {'authority': 'www.tiktok.com','accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7','accept-language': 'id-ID,id;q=0.9,en-US;q=0.8,en;q=0.7','sec-ch-ua': '"Not A(Brand";v="99", "Google Chrome";v="121", "Chromium";v="121"','sec-ch-ua-mobile': '?0','sec-ch-ua-platform': '"Windows"','sec-fetch-dest': 'document','sec-fetch-mode': 'navigate','sec-fetch-site': 'none','sec-fetch-user': '?1','upgrade-insecure-requests': '1','user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',}
-    res     = bs(requests.Session().get(url, headers=headers).content, 'html.parser')
-    element = json.loads(res.find(id='__UNIVERSAL_DATA_FOR_REHYDRATION__').contents[0])
-    info  = element["__DEFAULT_SCOPE__"]["webapp.video-detail"]["itemInfo"]["itemStruct"]
-    ids   = info["id"]
-    tag   = info["desc"]
-    chl   = info["author"]["nickname"]
-    msc   = info["music"]
-    stat  = info["stats"]
-    snd   = msc["title"]
-    sndby = msc["authorName"]
-    like  = stat["diggCount"]
-    komen = stat["commentCount"]
-    share = stat["shareCount"]
-    print('')
-    print("Username : ",chl)
-    print("Like     : ",like)
-    print("Komen    : ",komen)
-    print("Share    : ",share)
-    print("sound By : ",snd,'-',sndby)
-    print("Caption  : ",tag)
-    print('')
+    try:
+        res     = bs(requests.Session().get(url, headers=headers).content, 'html.parser')
+        element = json.loads(res.find(id='__UNIVERSAL_DATA_FOR_REHYDRATION__').contents[0])
+        info  = element["__DEFAULT_SCOPE__"]["webapp.video-detail"]["itemInfo"]["itemStruct"]
+        ids   = info["id"]
+        tag   = info["desc"]
+        chl   = info["author"]["nickname"]
+        msc   = info["music"]
+        stat  = info["stats"]
+        snd   = msc["title"]
+        sndby = msc["authorName"]
+        like  = stat["diggCount"]
+        komen = stat["commentCount"]
+        share = stat["shareCount"]
+        print('')
+        print("Username : ",chl)
+        print("Like     : ",like)
+        print("Komen    : ",komen)
+        print("Share    : ",share)
+        print("sound By : ",snd,'-',sndby)
+        print("Caption  : ",tag)
+        print('')
+    except AttributeError: return False
+
+def Downloads_Path(count, judul_Video, link):
+    print('==========================================')
+    print('[*] Start Downloading... ')
+    try:
+        pet = 'Results/video-YT'
+        if not os.path.exists(pet):
+            os.makedirs(pet, exist_ok=True)
+        ydl_opts = {
+            'format': 'best',
+            'outtmpl': os.path.join(pet, '{}_{}.mp4'.format(judul_Video, count)),  # Nama file dengan direktori
+        }
+        with YoutubeDL(ydl_opts) as ydl:
+            ydl.download([link])
+            count += 1
+        return True
+    except Exception as e:
+        print(f'Terjadi Kesalahan {e}')
+        print('')
+        return False
 
 def convert(i,url):
     count = 1
@@ -191,27 +217,40 @@ def convert(i,url):
             for x in pathfile:
                 try:
                     if 'www.youtube.com' in x or 'youtu.be' in x:
-                        if   'watch'  in x: judul = scrape_YTvideo(x)
-                        elif 'shorts' in x: judul = scrape_YTshort(x)
-                        print('==========================================')
-                        print('[*] Start Downloading... ')
-                        try:
-                            pet = 'Results/video-YT'
-                            if not os.path.exists(pet):
-                                os.makedirs(pet, exist_ok=True)
-                            ydl_opts = {
-                                'format': 'best',
-                                'outtmpl': os.path.join(pet, '{}_{}.mp4'.format(judul, count)),  # Nama file dengan direktori
-                            }
-                            with YoutubeDL(ydl_opts) as ydl:
-                                ydl.download([x])
-                                count += 1
-                        except Exception as e:
-                            print(f'[*] Gagal Mengunduh... {str(e)}');print('')
-                            print('==========================================')
-                            ex +=1
-                        print('[*] Success Downloading... ');print('');ok +=1
-                        print('==========================================')
+                        if   'watch'  in x:
+                            judul = scrape_YTvideo(x)
+                            if judul:
+                                check = Downloads_Path(count=count, judul_Video=judul, link=x)
+                                if check:
+                                    ok +=1
+                                    print('[*] Success Downloading... ');print('')
+                                    print('==========================================')
+                                else:
+                                    ex +=1
+                                    print('[*] Gagal Mengunduh... ');print('')
+                                    print('==========================================')
+                            else:
+                                print('Tidak Ditemukan Video Untuk Link {}'.format(x))
+                                print('')
+                                ex +=1
+
+                        elif 'shorts' in x:
+                            judul = scrape_YTshort(x)
+                            if judul:
+                                check = Downloads_Path(count=count, judul_Video=judul, link=x)
+                                if check:
+                                    ok +=1
+                                    print('[*] Success Downloading... ');print('')
+                                    print('==========================================')
+                                else:
+                                    ex +=1
+                                    print('[*] Gagal Mengunduh... ');print('')
+                                    print('==========================================')
+                            else:
+                                print('Tidak Ditemukan Video Untuk Link {}'.format(x))
+                                print('')
+                                ex +=1
+
                     elif 'www.tiktok.com' in x or 'vt.tiktok.com' in x:
                         download_Tt(x)
                         print('==========================================')
@@ -246,28 +285,40 @@ def convert(i,url):
             for x in url:
                 try:
                     if 'www.youtube.com' in x or 'youtu.be' in x:
-                        if   'watch'  in x: judul = scrape_YTvideo(x)
-                        elif 'shorts' in x: judul = scrape_YTshort(x)
-                        print('==========================================')
-                        print('[*] Start Downloading... ')
-                        try:
-                            pet = 'Results/video-YT'
-                            if not os.path.exists(pet):
-                                os.makedirs(pet, exist_ok=True)
-                            ydl_opts = {
-                                'format': 'best',
-                                'outtmpl': os.path.join(pet, '{}_{}.mp4'.format(judul, count)),  # Nama file dengan direktori
-                            }
-                            with YoutubeDL(ydl_opts) as ydl:
-                                ydl.download([x])
-                                count += 1
-                        except Exception as e:
-                            print(f'[*] Gagal Mengunduh... {str(e)}');print('')
-                            print('==========================================')
-                            ex +=1
-                            
-                        print('[*] Success Downloading... ');print('');ok +=1
-                        print('==========================================')
+                        if   'watch'  in x:
+                            judul = scrape_YTvideo(x)
+                            if judul:
+                                check = Downloads_Path(count=count, judul_Video=judul, link=x)
+                                if check:
+                                    ok +=1
+                                    print('[*] Success Downloading... ');print('')
+                                    print('==========================================')
+                                else:
+                                    ex +=1
+                                    print('[*] Gagal Mengunduh... ');print('')
+                                    print('==========================================')
+                            else:
+                                print('Tidak Ditemukan Video Untuk Link {}'.format(x))
+                                print('==========================================')
+                                ex +=1
+
+                        elif 'shorts' in x:
+                            judul = scrape_YTshort(x)
+                            if judul:
+                                check = Downloads_Path(count=count, judul_Video=judul, link=x)
+                                if check:
+                                    ok +=1
+                                    print('[*] Success Downloading... ');print('')
+                                    print('==========================================')
+                                else:
+                                    ex +=1
+                                    print('[*] Gagal Mengunduh... ');print('')
+                                    print('==========================================')
+                            else:
+                                print('Tidak Ditemukan Video Untuk Link {}'.format(x))
+                                print('')
+                                ex +=1
+                        
                     elif 'www.tiktok.com' in x or 'vt.tiktok.com' in x:
                         download_Tt(x)
                         print('==========================================')
