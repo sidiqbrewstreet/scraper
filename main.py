@@ -5,11 +5,13 @@ from urllib.request import urlopen
 from bs4 import BeautifulSoup as bs
 
 try:
-    from yt_dlp import YoutubeDL
+    from pytubefix import YouTube
+    from pytubefix.cli import on_progress
 except (ImportError, ModuleNotFoundError): 
     print("Modul 'yt_dlp' belum terinstal. Menginstal sekarang...")
-    subprocess.check_call(["python", "-m", "pip", "install", "yt-dlp"])
-    from yt_dlp import YoutubeDL
+    subprocess.check_call(["python", "-m", "pip", "install", "pytubefix"])
+    from pytubefix import YouTube
+    from pytubefix.cli import on_progress
 
 ###----- FOLDER -----###
 dictor = ['Results/video-YT','Results/video-TT']
@@ -26,18 +28,7 @@ ok, loop = 0, 0
 def clear(): os.system('cls' if 'win' in sys.platform.lower() else 'clear')
 
 ua = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:132.0) Gecko/20100101 Firefox/132.0'
-headersYT = lambda i=ua : {
-    'User-Agent': i,
-    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-    'Accept-Language': 'id,en-US;q=0.7,en;q=0.3',
-    'Accept-Encoding': 'gzip, deflate',
-    'Referer': 'https://www.youtube.com',
-    'Upgrade-Insecure-Requests': '1',
-    'Sec-Fetch-Dest': 'document',
-    'Sec-Fetch-Mode': 'navigate',
-    'Sec-Fetch-Site': 'same-origin',
-    'Sec-Fetch-User': '?1',
-    'Connection': 'keep-alive',}
+headersYT = lambda i=ua : {'User-Agent': i,'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8','Accept-Language': 'id,en-US;q=0.7,en;q=0.3','Accept-Encoding': 'gzip, deflate','Referer': 'https://www.youtube.com','Upgrade-Insecure-Requests': '1','Sec-Fetch-Dest': 'document','Sec-Fetch-Mode': 'navigate','Sec-Fetch-Site': 'same-origin','Sec-Fetch-User': '?1','Connection': 'keep-alive',}
 
 ###----------[ Menu ]------------###
 def menu():
@@ -110,7 +101,7 @@ def scrape_YTvideo(url) -> str:
     global judul
     try:
         res     = requests.Session().get(url).text
-        judul   = re.search(r'name="twitter:title" content="(.*?)"', str(res)).group(1)
+        judul   = re.search(r'name="twitter:title" content="(.*?)"', str(res)).group(1).replace('&quot;','').replace(';','')
         chl     = re.search(r'link itemprop="name" content="(.*?)"', str(res)).group(1)
         subs    = re.search(r'"subscriberCountText":{"accessibility":{"accessibilityData":{"label":"(.*?)"', str(res)).group(1)
         like    = re.search(r'"iconName":"LIKE","title":"(.*?)",', str(res)).group(1)
@@ -136,7 +127,7 @@ def scrape_YTshort(url) -> str:
     global judul
     res     = requests.Session().get(url).text.replace('\\','')
     try:
-        judul   = re.search(r'name="twitter:title" content="(.*?)"', str(res)).group(1)
+        judul   = re.search(r'name="twitter:title" content="(.*?)"', str(res)).group(1).replace('&quot; ','').replace('&quot;','').replace('&quot','')
         chl     = re.search(r'link itemprop="name" content="(.*?)"', str(res)).group(1)
         subs    = cvsubs(url)
         lkcount = str(re.search(r'"likeCountWithLikeText":{"accessibility":{"accessibilityData":{"label":"(.*?)"}', str(res)).group(1).replace(".", "").split()[0])
@@ -146,7 +137,7 @@ def scrape_YTshort(url) -> str:
         like    = cekangka(lkcount)
         views   = cekangka(output)
         print('')
-        print('Judul     : ',judul)
+        print('Judul     : ',judul.replace(';',''))
         print('Channel   : ',chl)
         print('Subscribe : ',subs)
         print('Like      : ',like)
@@ -190,13 +181,13 @@ def Downloads_Path(count, judul_Video, link):
         pet = 'Results/video-YT'
         if not os.path.exists(pet):
             os.makedirs(pet, exist_ok=True)
-        ydl_opts = {
-            'format': 'best',
-            'outtmpl': os.path.join(pet, '{}_{}.mp4'.format(judul_Video, count)),  # Nama file dengan direktori
-        }
-        with YoutubeDL(ydl_opts) as ydl:
-            ydl.download([link])
-            count += 1
+ 
+        yt = YouTube(link, on_progress_callback = on_progress)
+        print(f"Downloading - {yt.title}")
+
+        ys = yt.streams.get_highest_resolution()
+        ys.download(output_path=pet)
+        print('')
         return True
     except Exception as e:
         print(f'Terjadi Kesalahan {e}')
